@@ -207,6 +207,48 @@ class ShucksShell(cmd.Cmd):
         except Exception, e:
             fail(repr(e))
 
+    def do_left(self, arg):
+        try:
+            print self.xbmc.call("Input.Left", [], {})
+        except Exception, e:
+            fail(repr(e))
+
+    def do_right(self, arg):
+        try:
+            print self.xbmc.call("Input.Right", [], {})
+        except Exception, e:
+            fail(repr(e))
+
+    def do_down(self, arg):
+        try:
+            print self.xbmc.call("Input.Down", [], {})
+        except Exception, e:
+            fail(repr(e))
+
+    def do_up(self, arg):
+        try:
+            print self.xbmc.call("Input.Up", [], {})
+        except Exception, e:
+            fail(repr(e))
+
+    def do_s(self, arg):
+        try:
+            print self.xbmc.call("Input.Select", [], {})
+        except Exception, e:
+            fail(repr(e))
+
+    def do_c(self, arg):
+        try:
+            print self.xbmc.call("Input.ContextMenu", [], {})
+        except Exception, e:
+            fail(repr(e))
+
+    def do_b(self, arg):
+        try:
+            print self.xbmc.call("Input.Back", [], {})
+        except Exception, e:
+            fail(repr(e))
+
     def do_EOF(self, arg=""):
         print "\nAww, shucks! Leaving so soon?"
         return True
