@@ -25,14 +25,14 @@ from tinyrpc import RPCClient
 
 
 def success(message):
-    check = u"\u2713"
-    green = u"\033[0;32m%s\033[0m"
+    check = u"\u2713".encode('utf-8')
+    green = u"\033[0;32m%s\033[0m".encode('utf-8')
     print green % (" ".join((check, message)))
 
 
 def fail(message):
-    x = u"\u2717"
-    red = u"\033[0;31m%s\033[0m"
+    x = u"\u2717".encode('utf-8')
+    red = u"\033[0;31m%s\033[0m".encode('utf-8')
     print red % (" ".join((x, message)))
 
 
@@ -126,7 +126,7 @@ class ShucksShell(cmd.Cmd):
                         [], {"properties": props, "sort": {"method": "title"}})
                 movies = response['movies']
                 for movie in movies:
-                    print movie_to_string(movie).rstrip() + "\n"
+                    print (movie_to_string(movie).rstrip() + "\n").encode('utf-8')
             else:
                 fail("I only understand movies right now...")
                 return False
@@ -156,7 +156,8 @@ class ShucksShell(cmd.Cmd):
             props = ["title", "year", "runtime", "tagline", "plot"]
             info = self.xbmc.call("VideoLibrary.GetMovieDetails", [],
                                   {"movieid": mid, "properties": props})
-            print movie_to_string(info['moviedetails']).rstrip() + "\n\n"
+            print (movie_to_string(info['moviedetails']).rstrip() +
+                    "\n\n").encode('utf-8')
         except Exception, e:
             print repr(e)
             fail(str(e))
@@ -198,7 +199,8 @@ class ShucksShell(cmd.Cmd):
             return
 
         try:
-            print u"\033[36m\u21B3 Trying method \"%s\"...\033[0m" % args[0]
+            print (u"\033[36m\u21B3 Trying method \"%s\"...\033[0m" %
+                   args[0]).encode('utf-8')
 
             method, args, kwargs = args
             print json.dumps(self.xbmc.call(method, args, kwargs), indent=2)
