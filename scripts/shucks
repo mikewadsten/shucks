@@ -1,0 +1,5 @@
+#!python
+import shucks
+
+
+shucks.begin()

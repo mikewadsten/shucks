@@ -1,0 +1,4 @@
+cmd3==0.7.7
+docopt==0.6.1
+requests==2.2.1
+tinyrpc==0.5
