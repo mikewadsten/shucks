@@ -153,7 +153,7 @@ class ShucksShell(cmd.Cmd):
         try:
             #props = ["title", "year", "tagline", "plot", "genre", "runtime",
                      #"plot"]
-            props = ["title", "year", "runtime", "tagline", "plot"]
+            props = ["title", "year", "runtime", "tagline", "plot", "resume"]
             info = self.xbmc.call("VideoLibrary.GetMovieDetails", [],
                                   {"movieid": mid, "properties": props})
             print (movie_to_string(info['moviedetails']).rstrip() +
