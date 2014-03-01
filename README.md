@@ -1,7 +1,7 @@
 shucks
 ======
 
-A command-line JSON-RPC client for XBMC.
+A shell to interact with XBMC, via JSON-RPC.
 
 ![Chase approves.](yay.gif)
 
