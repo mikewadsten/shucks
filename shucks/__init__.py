@@ -112,11 +112,23 @@ class ShucksShell(cmd2.Cmd):
         except Exception, e:
             fail(str(e))
 
+    def do_clear(self, arg=""):
+        os.system('clear')
+
     def do_movies(self, arg):
         """Alias for `list movies`"""
-        return self.do_ls("movies")
+        import subprocess
+        # This will page the output if it's greater than one screen. Also will
+        # allow colors, and search ignores case.
+        less = subprocess.Popen(["less", "-iRX"], stdin=subprocess.PIPE)
+        rv = self.do_ls("movies", output=less.stdin)
+        less.communicate()
+        self.do_clear()
+        return rv
 
-    def do_ls(self, what):
+    # output is the output stream to write to. We want the 'movies' command to
+    # have its output piped to less, so this is necessary.
+    def do_ls(self, what, output=sys.stdout):
         """`ls movies`: Get a list of movies in the library."""
         if not what:
             fail("Need to say 'ls movies' or 'ls <whatever>'")
@@ -130,7 +142,11 @@ class ShucksShell(cmd2.Cmd):
                         [], {"properties": props, "sort": {"method": "title"}})
                 movies = response['movies']
                 for movie in movies:
-                    print (movie_to_string(movie).rstrip() + "\n").encode('utf-8')
+                    s = movie_to_string(movie).rstrip() + "\n"
+                    output.write(s.encode('utf-8'))
+                    output.write("\n")
+                if output is not sys.stdout:
+                    output.close()
             else:
                 fail("I only understand movies right now...")
                 return False
