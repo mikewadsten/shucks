@@ -71,7 +71,7 @@ def movie_to_string(obj):
         seconds = seconds % 60
 
         return "%dh %dm" % (hours, minutes) + \
-                (" %ds" % seconds if seconds else "")
+            (" %ds" % seconds if seconds else "")
 
     r = "\033[1;37m"
     r += obj.get('title', ">> NO TITLE <<")
@@ -202,7 +202,7 @@ class ShucksShell(cmd2.Cmd):
         info = self.video_library.get_movie_details(movieid=mid,
                                                     properties=props)
         print (movie_to_string(info['moviedetails']).rstrip() +
-                "\n\n").encode('utf-8')
+               "\n\n").encode('utf-8')
 
     @failexc
     def do_players(self, arg):
@@ -216,9 +216,9 @@ class ShucksShell(cmd2.Cmd):
             fail("Usage: call <method> [args] [kwargs]")
             return
         elif len(args) == 1:
-            args = args + [ "[]", "{}" ]
+            args = args + ["[]", "{}"]
         elif len(args) == 2:
-            args = args + [ "{}" ]
+            args = args + ["{}"]
         elif len(args) > 3:
             fail("Usage: call <method> [args] [kwargs]")
             return
@@ -240,7 +240,7 @@ class ShucksShell(cmd2.Cmd):
             return
 
         print (u"\033[36m\u21B3 Trying method \"%s\"...\033[0m" %
-                args[0]).encode('utf-8')
+               args[0]).encode('utf-8')
 
         method, args, kwargs = args
         return_value = self.xbmc.call(method, args, kwargs)
