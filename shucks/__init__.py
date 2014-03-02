@@ -23,7 +23,7 @@ from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc import RPCClient
 
-from shucks.proxies import Input, GUI
+from shucks.namespaces import Input, GUI
 
 
 def success(message):

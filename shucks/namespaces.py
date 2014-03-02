@@ -1,4 +1,4 @@
-class RpcProxy(object):
+class RPCNamespace(object):
     def __init__(self, method_map, prefix, rpc):
         full = lambda method: '.'.join((prefix, method))
         self.methods = {n: ProxiedRPC(rpc, full(method)) for n,method in \
@@ -27,7 +27,7 @@ class ProxiedRPC(object):
         return self.rpc.call(self.method, [], kwargs)
 
 
-class Input(RpcProxy):
+class Input(RPCNamespace):
     methods = {
         "back": "Back", "menu": "ContextMenu", "down": "Down",
         "execute_action": "ExecuteAction", "do": "ExecuteAction",
@@ -41,7 +41,7 @@ class Input(RpcProxy):
         super(Input, self).__init__(self.methods, "Input", rpc)
 
 
-class GUI(RpcProxy):
+class GUI(RPCNamespace):
     methods = {
         "notify": "ShowNotification",
         "show_notification": "ShowNotification"
