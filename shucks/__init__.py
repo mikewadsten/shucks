@@ -11,7 +11,7 @@ Options:
 """
 VERSION = "0.0.1"
 
-import cmd
+import cmd2
 from docopt import docopt
 import json
 import os
@@ -22,6 +22,8 @@ import textwrap
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc import RPCClient
+
+from shucks.proxies import Input
 
 
 def success(message):
@@ -80,9 +82,9 @@ def movie_to_string(obj):
     return r
 
 
-class ShucksShell(cmd.Cmd):
+class ShucksShell(cmd2.Cmd):
     def __init__(self, args):
-        cmd.Cmd.__init__(self)
+        cmd2.Cmd.__init__(self)
 
         self.prompt = "\n\033[1;33m# \033[0m"
 
@@ -97,6 +99,8 @@ class ShucksShell(cmd.Cmd):
 
         self.xbmc = rpc_client
 
+        self.input = Input(self.xbmc)
+
         # Will throw exception if it doesn't work
         #self.xbmc.call("JSONRPC.Ping", [], {})
 
@@ -110,12 +114,12 @@ class ShucksShell(cmd.Cmd):
 
     def do_movies(self, arg):
         """Alias for `list movies`"""
-        return self.do_list("movies")
+        return self.do_ls("movies")
 
-    def do_list(self, what):
-        """`list movies`: Get a list of movies in the library."""
+    def do_ls(self, what):
+        """`ls movies`: Get a list of movies in the library."""
         if not what:
-            fail("Need to say 'list movies' or 'list <whatever>'")
+            fail("Need to say 'ls movies' or 'ls <whatever>'")
             return
 
         try:
@@ -209,55 +213,61 @@ class ShucksShell(cmd.Cmd):
 
     def do_left(self, arg):
         try:
-            print self.xbmc.call("Input.Left", [], {})
+            result = self.input.left()
+            success("") if (result == "OK") else fail(result)
         except Exception, e:
             fail(repr(e))
 
     def do_right(self, arg):
         try:
-            print self.xbmc.call("Input.Right", [], {})
+            result = self.input.right()
+            success("") if (result == "OK") else fail(result)
         except Exception, e:
             fail(repr(e))
 
     def do_down(self, arg):
         try:
-            print self.xbmc.call("Input.Down", [], {})
+            result = self.input.down()
+            success("") if (result == "OK") else fail(result)
         except Exception, e:
             fail(repr(e))
 
     def do_up(self, arg):
         try:
-            print self.xbmc.call("Input.Up", [], {})
+            result = self.input.up()
+            success("") if (result == "OK") else fail(result)
         except Exception, e:
             fail(repr(e))
 
     def do_s(self, arg):
         try:
-            print self.xbmc.call("Input.Select", [], {})
+            result = self.input.select()
+            success("") if (result == "OK") else fail(result)
         except Exception, e:
             fail(repr(e))
 
     def do_c(self, arg):
         try:
-            print self.xbmc.call("Input.ContextMenu", [], {})
+            result = self.input.menu()
+            success("") if (result == "OK") else fail(result)
         except Exception, e:
             fail(repr(e))
+    do_menu = do_c
 
     def do_b(self, arg):
         try:
-            print self.xbmc.call("Input.Back", [], {})
+            result = self.input.back()
+            success("") if (result == "OK") else fail(result)
         except Exception, e:
             fail(repr(e))
+    do_back = do_b
 
     def do_EOF(self, arg=""):
         print "\nAww, shucks! Leaving so soon?"
         return True
-
-    def do_quit(self, arg):
-        return self.do_EOF()
-
-    def do_exit(self, arg):
-        return self.do_EOF()
+    do_exit = do_EOF
+    do_quit = do_EOF
+    do_q = do_EOF
 
     def emptyline(self):
         pass
