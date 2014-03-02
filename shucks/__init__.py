@@ -41,10 +41,11 @@ def fail(message):
 # Decorator to wrap a function in try/catch
 def failexc(func):
     from functools import wraps
+
     @wraps(func)
-    def handles_exception(self, *args):
+    def handles_exception(self, *args, **kwargs):
         try:
-            return func(self, *args)
+            return func(self, *args, **kwargs)
         except Exception, e:
             fail(str(e))
 
