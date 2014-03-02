@@ -23,7 +23,7 @@ from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc import RPCClient
 
-from shucks.namespaces import Input, GUI
+from shucks import namespaces
 
 
 def success(message):
@@ -113,8 +113,10 @@ class ShucksShell(cmd2.Cmd):
 
         self.xbmc = rpc_client
 
-        self.input = Input(self.xbmc)
-        self.gui = GUI(self.xbmc)
+        self.input = namespaces.Input(self.xbmc)
+        self.gui = namespaces.GUI(self.xbmc)
+        self.jsonrpc = namespaces.JSONRPC(self.xbmc)
+        self.video_library = namespaces.VideoLibrary(self.xbmc)
 
         # Will throw exception if it doesn't work
         #self.xbmc.call("JSONRPC.Ping", [], {})
@@ -122,7 +124,7 @@ class ShucksShell(cmd2.Cmd):
     @failexc
     def do_ping(self, arg=""):
         """Ping the server to see if the connection works."""
-        self.xbmc.call("JSONRPC.Ping", [], {})
+        self.jsonrpc.ping()
         success("Ping successful.")
 
     @failexc
@@ -164,9 +166,10 @@ class ShucksShell(cmd2.Cmd):
 
         if what == "movies":
             props = ["title", "year", "tagline", "resume", "runtime",
-                        "plot"]
-            response = self.xbmc.call("VideoLibrary.GetMovies",
-                    [], {"properties": props, "sort": {"method": "title"}})
+                     "plot"]
+            response = self.video_library.get_movies(
+                properties=props, sort={"method": "title"})
+
             movies = response['movies']
             for movie in movies:
                 s = movie_to_string(movie).rstrip() + "\n"
@@ -196,8 +199,8 @@ class ShucksShell(cmd2.Cmd):
         #props = ["title", "year", "tagline", "plot", "genre", "runtime",
                     #"plot"]
         props = ["title", "year", "runtime", "tagline", "plot", "resume"]
-        info = self.xbmc.call("VideoLibrary.GetMovieDetails", [],
-                                {"movieid": mid, "properties": props})
+        info = self.video_library.get_movie_details(movieid=mid,
+                                                    properties=props)
         print (movie_to_string(info['moviedetails']).rstrip() +
                 "\n\n").encode('utf-8')
 
