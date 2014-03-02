@@ -23,7 +23,7 @@ from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc import RPCClient
 
-from shucks.proxies import Input
+from shucks.proxies import Input, GUI
 
 
 def success(message):
@@ -36,6 +36,19 @@ def fail(message):
     x = u"\u2717".encode('utf-8')
     red = u"\033[0;31m%s\033[0m".encode('utf-8')
     print red % (" ".join((x, message)))
+
+
+# Decorator to wrap a function in try/catch
+def failexc(func):
+    from functools import wraps
+    @wraps(func)
+    def handles_exception(self, *args):
+        try:
+            return func(self, *args)
+        except Exception, e:
+            fail(str(e))
+
+    return handles_exception
 
 
 _width = int(os.popen("stty size", "r").read().split()[1])
@@ -100,21 +113,33 @@ class ShucksShell(cmd2.Cmd):
         self.xbmc = rpc_client
 
         self.input = Input(self.xbmc)
+        self.gui = GUI(self.xbmc)
 
         # Will throw exception if it doesn't work
         #self.xbmc.call("JSONRPC.Ping", [], {})
 
+    @failexc
     def do_ping(self, arg=""):
         """Ping the server to see if the connection works."""
-        try:
-            self.xbmc.call("JSONRPC.Ping", [], {})
-            success("Ping successful.")
-        except Exception, e:
-            fail(str(e))
+        self.xbmc.call("JSONRPC.Ping", [], {})
+        success("Ping successful.")
 
+    @failexc
     def do_clear(self, arg=""):
         os.system('clear')
 
+    @failexc
+    def do_notify(self, arg=""):
+        import shlex
+        args = shlex.split(arg)
+        if len(args) != 2:
+            fail("Expected two strings: title and message")
+            return
+
+        self.gui.notify(title=args[0], message=args[1])
+        success("")
+
+    @failexc
     def do_movies(self, arg):
         """Alias for `list movies`"""
         import subprocess
@@ -123,35 +148,32 @@ class ShucksShell(cmd2.Cmd):
         less = subprocess.Popen(["less", "-iRX"], stdin=subprocess.PIPE)
         rv = self.do_ls("movies", output=less.stdin)
         less.communicate()
+        less.stdin.close()
         self.do_clear()
         return rv
 
     # output is the output stream to write to. We want the 'movies' command to
     # have its output piped to less, so this is necessary.
+    @failexc
     def do_ls(self, what, output=sys.stdout):
         """`ls movies`: Get a list of movies in the library."""
         if not what:
             fail("Need to say 'ls movies' or 'ls <whatever>'")
             return
 
-        try:
-            if what == "movies":
-                props = ["title", "year", "tagline", "resume", "runtime",
-                         "plot"]
-                response = self.xbmc.call("VideoLibrary.GetMovies",
-                        [], {"properties": props, "sort": {"method": "title"}})
-                movies = response['movies']
-                for movie in movies:
-                    s = movie_to_string(movie).rstrip() + "\n"
-                    output.write(s.encode('utf-8'))
-                    output.write("\n")
-                if output is not sys.stdout:
-                    output.close()
-            else:
-                fail("I only understand movies right now...")
-                return False
-        except Exception, e:
-            fail(str(e))
+        if what == "movies":
+            props = ["title", "year", "tagline", "resume", "runtime",
+                        "plot"]
+            response = self.xbmc.call("VideoLibrary.GetMovies",
+                    [], {"properties": props, "sort": {"method": "title"}})
+            movies = response['movies']
+            for movie in movies:
+                s = movie_to_string(movie).rstrip() + "\n"
+                output.write(s.encode('utf-8'))
+                output.write("\n")
+        else:
+            fail("I only understand movies right now...")
+            return False
 
     def do_info(self, arg):
         """`info movie <id>`: get movie details"""
@@ -170,24 +192,19 @@ class ShucksShell(cmd2.Cmd):
             fail("Usage: list movie <id>")
             return False
 
-        try:
-            #props = ["title", "year", "tagline", "plot", "genre", "runtime",
-                     #"plot"]
-            props = ["title", "year", "runtime", "tagline", "plot", "resume"]
-            info = self.xbmc.call("VideoLibrary.GetMovieDetails", [],
-                                  {"movieid": mid, "properties": props})
-            print (movie_to_string(info['moviedetails']).rstrip() +
-                    "\n\n").encode('utf-8')
-        except Exception, e:
-            print repr(e)
-            fail(str(e))
+        #props = ["title", "year", "tagline", "plot", "genre", "runtime",
+                    #"plot"]
+        props = ["title", "year", "runtime", "tagline", "plot", "resume"]
+        info = self.xbmc.call("VideoLibrary.GetMovieDetails", [],
+                                {"movieid": mid, "properties": props})
+        print (movie_to_string(info['moviedetails']).rstrip() +
+                "\n\n").encode('utf-8')
 
+    @failexc
     def do_players(self, arg):
-        try:
-            print self.xbmc.call("Player.GetActivePlayers", [], {})
-        except Exception, e:
-            fail(repr(e))
+        print self.xbmc.call("Player.GetActivePlayers", [], {})
 
+    @failexc
     def do_call(self, arg):
         args = arg.split()
 
@@ -218,64 +235,48 @@ class ShucksShell(cmd2.Cmd):
             fail("'kwargs' is not a valid JSON dict")
             return
 
-        try:
-            print (u"\033[36m\u21B3 Trying method \"%s\"...\033[0m" %
-                   args[0]).encode('utf-8')
+        print (u"\033[36m\u21B3 Trying method \"%s\"...\033[0m" %
+                args[0]).encode('utf-8')
 
-            method, args, kwargs = args
-            print json.dumps(self.xbmc.call(method, args, kwargs), indent=2)
-        except Exception, e:
-            fail(repr(e))
+        method, args, kwargs = args
+        return_value = self.xbmc.call(method, args, kwargs)
+        print json.dumps(return_value, indent=2)
 
+    @failexc
     def do_left(self, arg):
-        try:
-            result = self.input.left()
-            success("") if (result == "OK") else fail(result)
-        except Exception, e:
-            fail(repr(e))
+        result = self.input.left()
+        success("") if (result == "OK") else fail(result)
 
+    @failexc
     def do_right(self, arg):
-        try:
-            result = self.input.right()
-            success("") if (result == "OK") else fail(result)
-        except Exception, e:
-            fail(repr(e))
+        result = self.input.right()
+        success("") if (result == "OK") else fail(result)
 
+    @failexc
     def do_down(self, arg):
-        try:
-            result = self.input.down()
-            success("") if (result == "OK") else fail(result)
-        except Exception, e:
-            fail(repr(e))
+        result = self.input.down()
+        success("") if (result == "OK") else fail(result)
 
+    @failexc
     def do_up(self, arg):
-        try:
-            result = self.input.up()
-            success("") if (result == "OK") else fail(result)
-        except Exception, e:
-            fail(repr(e))
+        result = self.input.up()
+        success("") if (result == "OK") else fail(result)
 
+    @failexc
     def do_s(self, arg):
-        try:
-            result = self.input.select()
-            success("") if (result == "OK") else fail(result)
-        except Exception, e:
-            fail(repr(e))
+        result = self.input.select()
+        success("") if (result == "OK") else fail(result)
 
+    @failexc
     def do_c(self, arg):
-        try:
-            result = self.input.menu()
-            success("") if (result == "OK") else fail(result)
-        except Exception, e:
-            fail(repr(e))
+        result = self.input.menu()
+        success("") if (result == "OK") else fail(result)
     do_menu = do_c
 
+    @failexc
     def do_b(self, arg):
-        try:
-            result = self.input.back()
-            success("") if (result == "OK") else fail(result)
-        except Exception, e:
-            fail(repr(e))
+        result = self.input.back()
+        success("") if (result == "OK") else fail(result)
     do_back = do_b
 
     def do_EOF(self, arg=""):

@@ -39,3 +39,12 @@ class Input(RpcProxy):
     }
     def __init__(self, rpc):
         super(Input, self).__init__(self.methods, "Input", rpc)
+
+
+class GUI(RpcProxy):
+    methods = {
+        "notify": "ShowNotification",
+        "show_notification": "ShowNotification"
+    }
+    def __init__(self, rpc):
+        super(GUI, self).__init__(self.methods, "GUI", rpc)
