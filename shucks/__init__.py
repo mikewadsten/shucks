@@ -117,6 +117,7 @@ class ShucksShell(cmd2.Cmd):
         self.gui = namespaces.GUI(self.xbmc)
         self.jsonrpc = namespaces.JSONRPC(self.xbmc)
         self.video_library = namespaces.VideoLibrary(self.xbmc)
+        self.player = namespaces.Player(self.xbmc)
 
         # Will throw exception if it doesn't work
         #self.xbmc.call("JSONRPC.Ping", [], {})
@@ -129,10 +130,12 @@ class ShucksShell(cmd2.Cmd):
 
     @failexc
     def do_clear(self, arg=""):
+        """Clear the screen."""
         os.system('clear')
 
     @failexc
     def do_notify(self, arg=""):
+        """Shows a GUI notification. Takes two args: a title and a message."""
         import shlex
         args = shlex.split(arg)
         if len(args) != 2:
@@ -206,10 +209,42 @@ class ShucksShell(cmd2.Cmd):
 
     @failexc
     def do_players(self, arg):
-        print self.xbmc.call("Player.GetActivePlayers", [], {})
+        """Get all active players."""
+        pprint(self.player.get_active_players())
+
+
+    @failexc
+    def do_nowplaying(self, arg=""):
+        """Get information about what's currently playing.
+
+        Takes an optional arg: player type to look at (video/picture/audio)
+                                (default: video)
+        """
+        if arg:
+            playertype = arg.strip()
+        else:
+            playertype = "video"
+
+        players = self.player.get_active_players()
+        if not len(players):
+            raise Exception("No players are active")
+
+        of_type = [p for p in players if p['type'] == playertype]
+
+        if not len(of_type):
+            raise Exception("No active player of type '%s'" % playertype)
+        current = self.player.whats_playing(playerid=of_type[1]['playerid'])
+        pprint(current)
 
     @failexc
     def do_call(self, arg):
+        """Do a manual JSONRPC call.
+
+        Takes 3 args: method, [args], {kwargs}
+
+        Arguments are parsed by just using split() on the argument string in
+        all, so [args] and {kwargs} need to be JSON with no whitespace.
+        """
         args = arg.split()
 
         if not len(args):
@@ -248,47 +283,55 @@ class ShucksShell(cmd2.Cmd):
 
     @failexc
     def do_left(self, arg):
+        """Navigate left in the UI."""
         result = self.input.left()
         success("") if (result == "OK") else fail(result)
 
     @failexc
     def do_right(self, arg):
+        """Navigate right in the UI."""
         result = self.input.right()
         success("") if (result == "OK") else fail(result)
 
     @failexc
     def do_down(self, arg):
+        """Navigate up in the UI."""
         result = self.input.down()
         success("") if (result == "OK") else fail(result)
 
     @failexc
     def do_up(self, arg):
+        """Navigate up in the UI."""
         result = self.input.up()
         success("") if (result == "OK") else fail(result)
 
     @failexc
     def do_s(self, arg):
+        """Select the current item in the UI."""
         result = self.input.select()
         success("") if (result == "OK") else fail(result)
 
     @failexc
     def do_c(self, arg):
+        """Shows the context menu."""
         result = self.input.menu()
         success("") if (result == "OK") else fail(result)
     do_menu = do_c
 
     @failexc
     def do_b(self, arg):
+        """Navigate back in the UI."""
         result = self.input.back()
         success("") if (result == "OK") else fail(result)
     do_back = do_b
 
-    def do_EOF(self, arg=""):
+    def do_eof(self, arg=""):
+        """End this shucks session."""
         print "\nAww, shucks! Leaving so soon?"
         return True
-    do_exit = do_EOF
-    do_quit = do_EOF
-    do_q = do_EOF
+    do_exit = do_eof
+    do_quit = do_eof
+    do_q = do_eof
 
     def emptyline(self):
         pass

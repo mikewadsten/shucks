@@ -78,3 +78,19 @@ class VideoLibrary(RPCNamespace):
 
     def __init__(self, rpc):
         super(VideoLibrary, self).__init__(self.methods, rpc)
+
+
+class Player(RPCNamespace):
+    methods = {
+        "get_active_players": "GetActivePlayers", "get_item": "GetItem",
+        "whats_playing": "GetItem", "get_properties": "GetProperties",
+        "go": "GoTo", "go_to": "GoTo", "move": "Move", "open": "Open",
+        "play": "PlayPause", "pause": "PlayPause", "playpause": "PlayPause",
+        "pp": "PlayPause", "seek": "Seek", "party_mode": "SetPartyMode",
+        "repeat": "SetRepeat", "set_speed": "SetSpeed",
+        "subtitle": "SetSubtitle", "stop": "Stop", "zoom": "Zoom"
+    }
+    prefix = "Player"
+
+    def __init__(self, rpc):
+        super(Player, self).__init__(self.methods, rpc)
